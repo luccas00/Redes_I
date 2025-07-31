@@ -1,0 +1,17 @@
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Release\net9.0-windows\ClienteChat.exe
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Release\net9.0-windows\ClienteChat.deps.json
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Release\net9.0-windows\ClienteChat.runtimeconfig.json
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Release\net9.0-windows\ClienteChat.dll
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Release\net9.0-windows\ClienteChat.pdb
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\Chat_TCP.ClienteChat.resources
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.csproj.GenerateResource.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.GeneratedMSBuildEditorConfig.editorconfig
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.AssemblyInfoInputs.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.AssemblyInfo.cs
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.csproj.CoreCompileInputs.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.sourcelink.json
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.dll
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\refint\ClienteChat.dll
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.pdb
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ClienteChat.genruntimeconfig.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Release\net9.0-windows\ref\ClienteChat.dll

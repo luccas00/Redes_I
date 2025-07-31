@@ -1,0 +1,15 @@
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\bin\Debug\net9.0\ServidorChat.exe
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\bin\Debug\net9.0\ServidorChat.deps.json
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\bin\Debug\net9.0\ServidorChat.runtimeconfig.json
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\bin\Debug\net9.0\ServidorChat.dll
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\bin\Debug\net9.0\ServidorChat.pdb
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.GeneratedMSBuildEditorConfig.editorconfig
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.AssemblyInfoInputs.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.AssemblyInfo.cs
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.csproj.CoreCompileInputs.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.sourcelink.json
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.dll
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\refint\ServidorChat.dll
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.pdb
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ServidorChat.genruntimeconfig.cache
+F:\UFOP\Redes\Trabalho_Chat_TCP\ServidorChat\obj\Debug\net9.0\ref\ServidorChat.dll

@@ -1,90 +1,141 @@
-﻿
-using System.Net.Sockets;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Text.RegularExpressions;
 
-namespace Chat_TCP;
-
-class Program
+namespace Chat_TCP
 {
-    static TcpListener listener;
-    static List<TcpClient> clientes = new();
-    static object locker = new();
-
-    static void Main()
+    class Program
     {
-        int porta = 1998;
-        IPAddress ip = IPAddress.Any;
-        listener = new TcpListener(ip, porta);
-        listener.Start();
-        Console.WriteLine($"Servidor ouvindo na porta {porta}...");
-        Console.WriteLine($"Servidor ouvindo no IP {ip}...");
-        Console.WriteLine($"Servidor IPv4 {ip.MapToIPv4}...");
-        Console.WriteLine($"Servidor IPv6 {ip.MapToIPv6}...");
+        static TcpListener listener;
+        static List<(TcpClient cliente, string apelido, string ip, int portaPrivada)> clientes = new();
+        static object locker = new();
 
-        while (true)
+        static void Main()
         {
-            TcpClient cliente = listener.AcceptTcpClient();
-            lock (locker)
+            int porta = 1998;
+            IPAddress ip = IPAddress.Any;
+            listener = new TcpListener(ip, porta);
+            listener.Start();
+            Console.WriteLine($"Servidor ouvindo na porta {porta}");
+            Console.WriteLine($"Servidor ouvindo de todos os IPs");
+
+            while (true)
             {
-                clientes.Add(cliente);
-                Console.WriteLine($"Novo usuário conectado. Total de usuários: {clientes.Count}");
-            }
+                TcpClient cliente = listener.AcceptTcpClient();
+                NetworkStream stream = cliente.GetStream();
+                byte[] buffer = new byte[1024];
 
-            Thread thread = new(() => AtenderCliente(cliente));
-            thread.Start();
-        }
-    }
+                int bytesLidos = stream.Read(buffer, 0, buffer.Length);
+                string dados = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
 
-    static void AtenderCliente(TcpClient cliente)
-    {
-        try
-        {
-            NetworkStream stream = cliente.GetStream();
-            byte[] buffer = new byte[1024];
-            int bytesLidos;
-
-            while ((bytesLidos = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                string mensagem = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
-                Console.WriteLine($"Mensagem recebida: {mensagem}");
-                Broadcast(mensagem, cliente);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Erro: " + ex.Message);
-        }
-        finally
-        {
-            lock (locker)
-            {
-                clientes.Remove(cliente);
-                Console.WriteLine($"Usuário desconectado. Total de usuários: {clientes.Count}");
-            }
-            cliente.Close();
-        }
-    }
-
-    static void Broadcast(string mensagem, TcpClient remetente)
-    {
-        byte[] dados = Encoding.UTF8.GetBytes(mensagem);
-
-        lock (locker)
-        {
-            foreach (var c in clientes)
-            {
-                if (c != remetente)
+                // Espera formato "apelido;porta"
+                var partes = dados.Split(';');
+                if (partes.Length != 2 || !int.TryParse(partes[1], out int portaPrivada))
                 {
-                    try
+                    Console.WriteLine("Dados inválidos do cliente, desconectando.");
+                    cliente.Close();
+                    continue;
+                }
+
+                string apelido = partes[0];
+                string ipCliente = ((IPEndPoint)cliente.Client.RemoteEndPoint).Address.ToString();
+
+                lock (locker)
+                {
+                    clientes.Add((cliente, apelido, ipCliente, portaPrivada));
+                    Console.WriteLine($"Novo usuário conectado: {apelido} ({ipCliente}:{portaPrivada})");
+                    Console.WriteLine($"Total de usuários: {clientes.Count}");
+                }
+
+                Thread thread = new(() => AtenderCliente(cliente));
+                thread.Start();
+            }
+        }
+
+        static void AtenderCliente(TcpClient cliente)
+        {
+            try
+            {
+                NetworkStream stream = cliente.GetStream();
+                byte[] buffer = new byte[1024];
+                int bytesLidos;
+
+                while ((bytesLidos = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    string mensagem = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
+
+                    if (mensagem == "/count")
                     {
-                        NetworkStream stream = c.GetStream();
-                        stream.Write(dados, 0, dados.Length);
+                        int total;
+                        lock (locker)
+                            total = clientes.Count;
+
+                        string resposta = $"Usuarios Conectados: {total}";
+                        byte[] respostaBuffer = Encoding.UTF8.GetBytes(resposta);
+                        stream.Write(respostaBuffer, 0, respostaBuffer.Length);
+                        continue;
                     }
-                    catch
+                    else if (mensagem == "/lista")
                     {
-                        // Cliente desconectado
+                        StringBuilder sb = new();
+                        sb.AppendLine("Usuarios Conectados:");
+                        lock (locker)
+                        {
+                            foreach (var c in clientes)
+                                sb.AppendLine($"- {c.apelido} ({c.ip}:{c.portaPrivada})");
+                        }
+
+                        byte[] resposta = Encoding.UTF8.GetBytes(sb.ToString());
+                        stream.Write(resposta, 0, resposta.Length);
+                        continue;
+                    }
+
+                    Console.WriteLine($"Mensagem recebida: {mensagem}");
+                    Broadcast(mensagem, cliente);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Erro: " + ex.Message);
+            }
+            finally
+            {
+                lock (locker)
+                {
+                    var clienteRemover = clientes.Find(c => c.cliente == cliente);
+                    if (clienteRemover.cliente != null)
+                        clientes.Remove(clienteRemover);
+
+                    Console.WriteLine($"Usuário desconectado. Total de usuários: {clientes.Count}");
+                }
+                cliente.Close();
+            }
+        }
+
+        static void Broadcast(string mensagem, TcpClient remetente)
+        {
+            byte[] dados = Encoding.UTF8.GetBytes(mensagem);
+
+            lock (locker)
+            {
+                foreach (var c in clientes)
+                {
+                    if (c.cliente != remetente)
+                    {
+                        try
+                        {
+                            NetworkStream stream = c.cliente.GetStream();
+                            stream.Write(dados, 0, dados.Length);
+                        }
+                        catch
+                        {
+                            // Cliente desconectado, opcional remover da lista
+                        }
                     }
                 }
             }

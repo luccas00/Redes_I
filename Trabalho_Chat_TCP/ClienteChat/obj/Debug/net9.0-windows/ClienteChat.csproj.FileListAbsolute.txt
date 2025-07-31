@@ -3,7 +3,6 @@ F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Debug\net9.0-windows\ClienteChat
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Debug\net9.0-windows\ClienteChat.runtimeconfig.json
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Debug\net9.0-windows\ClienteChat.dll
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\bin\Debug\net9.0-windows\ClienteChat.pdb
-F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ClienteChat.Form1.resources
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ClienteChat.csproj.GenerateResource.cache
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ClienteChat.GeneratedMSBuildEditorConfig.editorconfig
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ClienteChat.AssemblyInfoInputs.cache

@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Text.RegularExpressions;
 
 namespace Chat_TCP
 {
@@ -17,11 +16,9 @@ namespace Chat_TCP
         static void Main()
         {
             int porta = 1998;
-            IPAddress ip = IPAddress.Any;
-            listener = new TcpListener(ip, porta);
+            listener = new TcpListener(IPAddress.Any, porta);
             listener.Start();
-            Console.WriteLine($"Servidor ouvindo na porta {porta}");
-            Console.WriteLine($"Servidor ouvindo de todos os IPs");
+            Console.WriteLine($"Servidor ouvindo em todas as interfaces na porta {porta}");
 
             while (true)
             {
@@ -32,11 +29,10 @@ namespace Chat_TCP
                 int bytesLidos = stream.Read(buffer, 0, buffer.Length);
                 string dados = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
 
-                // Espera formato "apelido;porta"
                 var partes = dados.Split(';');
                 if (partes.Length != 2 || !int.TryParse(partes[1], out int portaPrivada))
                 {
-                    Console.WriteLine("Dados inválidos do cliente, desconectando.");
+                    Console.WriteLine("Formato inválido recebido, desconectando cliente.");
                     cliente.Close();
                     continue;
                 }
@@ -47,8 +43,7 @@ namespace Chat_TCP
                 lock (locker)
                 {
                     clientes.Add((cliente, apelido, ipCliente, portaPrivada));
-                    Console.WriteLine($"Novo usuário conectado: {apelido} ({ipCliente}:{portaPrivada})");
-                    Console.WriteLine($"Total de usuários: {clientes.Count}");
+                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Novo usuário: {apelido} ({ipCliente}:{portaPrivada})");
                 }
 
                 Thread thread = new(() => AtenderCliente(cliente));
@@ -66,7 +61,7 @@ namespace Chat_TCP
 
                 while ((bytesLidos = stream.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    string mensagem = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
+                    string mensagem = Encoding.UTF8.GetString(buffer, 0, bytesLidos).Trim();
 
                     if (mensagem == "/count")
                     {
@@ -74,34 +69,31 @@ namespace Chat_TCP
                         lock (locker)
                             total = clientes.Count;
 
-                        string resposta = $"Usuarios Conectados: {total}";
-                        byte[] respostaBuffer = Encoding.UTF8.GetBytes(resposta);
-                        stream.Write(respostaBuffer, 0, respostaBuffer.Length);
-                        continue;
+                        byte[] resposta = Encoding.UTF8.GetBytes($"Usuarios Conectados: {total}");
+                        stream.Write(resposta, 0, resposta.Length);
                     }
                     else if (mensagem == "/lista")
                     {
                         StringBuilder sb = new();
-                        sb.AppendLine("Usuarios Conectados:");
                         lock (locker)
                         {
                             foreach (var c in clientes)
-                                sb.AppendLine($"- {c.apelido} ({c.ip}:{c.portaPrivada})");
+                                sb.AppendLine($"{c.apelido};{c.ip};{c.portaPrivada}");
                         }
 
                         byte[] resposta = Encoding.UTF8.GetBytes(sb.ToString());
                         stream.Write(resposta, 0, resposta.Length);
-                        continue;
                     }
-
-                    Console.WriteLine($"Mensagem recebida: {mensagem}");
-                    Broadcast(mensagem, cliente);
+                    else
+                    {
+                        Console.WriteLine($"Mensagem recebida: {mensagem}");
+                        Broadcast(mensagem, cliente);
+                    }
                 }
-
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro: " + ex.Message);
+                Console.WriteLine($"Erro: {ex.Message}");
             }
             finally
             {
@@ -110,10 +102,9 @@ namespace Chat_TCP
                     var clienteRemover = clientes.Find(c => c.cliente == cliente);
                     if (clienteRemover.cliente != null)
                         clientes.Remove(clienteRemover);
-
-                    Console.WriteLine($"Usuário desconectado. Total de usuários: {clientes.Count}");
                 }
                 cliente.Close();
+                Console.WriteLine($"Cliente desconectado. Total atual: {clientes.Count}");
             }
         }
 
@@ -134,7 +125,7 @@ namespace Chat_TCP
                         }
                         catch
                         {
-                            // Cliente desconectado, opcional remover da lista
+                            // Ignorar cliente desconectado
                         }
                     }
                 }

@@ -10,7 +10,10 @@ namespace Chat_TCP
 {
     public class ClienteChat : Form
     {
+        
         private static Dictionary<string, JanelaChatPrivado> janelasPrivadas = new();
+
+        private Label lblUsuarios;
 
         TextBox txtMensagens;
         Button btnConectar;
@@ -23,6 +26,8 @@ namespace Chat_TCP
         TcpListener servidorPrivado;
         string apelido;
         int portaPrivada;
+
+        bool recebendoListaUsuarios = false;
 
         public ClienteChat(string apelido, string ipServidor, int porta)
         {
@@ -41,9 +46,16 @@ namespace Chat_TCP
                 ScrollBars = ScrollBars.Vertical
             };
 
-            lstUsuarios = new ListBox { Dock = DockStyle.Top, Height = 120 };
+            lstUsuarios = new ListBox
+            {
+                Dock = DockStyle.Top,
+                Height = 120,
+                Enabled = true,
+                SelectionMode = SelectionMode.One
+            };
+            lstUsuarios.DoubleClick += (s, e) => ConectarPrivado();
 
-            btnConectar = new Button { Text = "Conectar", Dock = DockStyle.Top, Height = 30 };
+            btnConectar = new Button { Text = "Conectar Chat Privado", Dock = DockStyle.Top, Height = 30 };
 
             var painelBroadcast = new Panel { Dock = DockStyle.Bottom, Height = 30 };
             TextBox txtBroadcast = new TextBox { Dock = DockStyle.Fill };
@@ -51,31 +63,30 @@ namespace Chat_TCP
             painelBroadcast.Controls.Add(txtBroadcast);
             painelBroadcast.Controls.Add(btnBroadcast);
 
+            var painelConectar = new Panel { Dock = DockStyle.Top, Height = 30 };
+            painelConectar.Controls.Add(btnConectar);
+
             var painelSuperior = new Panel { Dock = DockStyle.Top, Height = 30 };
-            Label lblUsuarios = new Label { Text = "Usuarios Conectados: ?", AutoSize = true, Dock = DockStyle.Left };
-            Button btnListar = new Button { Text = "Listar", Width = 80, Dock = DockStyle.Right };
-            Button btnAtualizar = new Button { Text = "Atualizar", Width = 80, Dock = DockStyle.Right };
-            painelSuperior.Controls.Add(lblUsuarios);
+            Button btnListar = new Button { Text = "Listar Usuarios", Width = 150, Dock = DockStyle.Right };
             painelSuperior.Controls.Add(btnListar);
-            painelSuperior.Controls.Add(btnAtualizar);
 
             Controls.Add(txtMensagens);
             Controls.Add(lstUsuarios);
-            Controls.Add(btnConectar);
             Controls.Add(painelSuperior);
+            Controls.Add(painelConectar);
             Controls.Add(painelBroadcast);
 
-            // Definir porta privada dinâmica (usar 0 para escolher automaticamente)
+            // Porta privada dinâmica
             servidorPrivado = new TcpListener(IPAddress.Any, 0);
             servidorPrivado.Start();
             portaPrivada = ((IPEndPoint)servidorPrivado.LocalEndpoint).Port;
 
-            // Conectar ao servidor principal
+            // Conectar servidor principal
             cliente = new TcpClient();
             cliente.Connect(ipServidor, porta);
             stream = cliente.GetStream();
 
-            // Enviar apelido e porta privada na primeira mensagem
+            // Enviar apelido e porta privada
             string dadosConexao = $"{apelido};{portaPrivada}";
             byte[] dadosBytes = Encoding.UTF8.GetBytes(dadosConexao);
             stream.Write(dadosBytes, 0, dadosBytes.Length);
@@ -96,7 +107,7 @@ namespace Chat_TCP
 
                         if (!janelasPrivadas.ContainsKey(chave))
                         {
-                            var chatPrivado = new JanelaChatPrivado(apelido, ipRemoto, portaPrivada);
+                            var chatPrivado = new JanelaChatPrivado(apelido, ipRemoto, ipRemoto, portaPrivada);
                             chatPrivado.AssociarCliente(clientePrivado);
 
                             chatPrivado.FormClosed += (a, b) => janelasPrivadas.Remove(chave);
@@ -106,10 +117,8 @@ namespace Chat_TCP
                         }
                         else
                         {
-                            clientePrivado.Close(); // Ignora duplicado
+                            clientePrivado.Close();
                         }
-
-
                     }));
                 }
             });
@@ -117,7 +126,6 @@ namespace Chat_TCP
             threadServidorPrivado.Start();
 
             btnBroadcast.Click += (s, e) => EnviarBroadcast(apelido, txtBroadcast);
-            btnAtualizar.Click += (s, e) => AtualizarContador(lblUsuarios);
             btnListar.Click += (s, e) => ListarUsuarios();
             btnConectar.Click += (s, e) => ConectarPrivado();
         }
@@ -130,7 +138,7 @@ namespace Chat_TCP
                 return;
             }
 
-            string item = lstUsuarios.SelectedItem.ToString(); // Exemplo: "Maria (192.168.0.10:3005)"
+            string item = lstUsuarios.SelectedItem.ToString(); // Exemplo: "João (192.168.0.10:3005)"
             int idxIni = item.LastIndexOf('(');
             int idxFim = item.LastIndexOf(')');
             if (idxIni < 0 || idxFim < 0 || idxFim <= idxIni)
@@ -139,6 +147,7 @@ namespace Chat_TCP
                 return;
             }
 
+            string apelidoDestino = item.Substring(0, idxIni).Trim();
             string endereco = item.Substring(idxIni + 1, idxFim - idxIni - 1);
             var partes = endereco.Split(':');
             if (partes.Length != 2)
@@ -154,19 +163,13 @@ namespace Chat_TCP
                 return;
             }
 
-            var chatPrivado = new JanelaChatPrivado(apelido, ipDestino, portaDestino);
+            var chatPrivado = new JanelaChatPrivado(apelido, apelidoDestino, ipDestino, portaDestino);
             chatPrivado.Show();
         }
 
         void ListarUsuarios()
         {
             byte[] buffer = Encoding.UTF8.GetBytes("/lista");
-            stream.Write(buffer, 0, buffer.Length);
-        }
-
-        void AtualizarContador(Label lbl)
-        {
-            byte[] buffer = Encoding.UTF8.GetBytes("/count");
             stream.Write(buffer, 0, buffer.Length);
         }
 
@@ -193,7 +196,8 @@ namespace Chat_TCP
 
                     string msg = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
 
-                    if (msg.StartsWith("Usuarios Conectados:"))
+                    // Verifica se mensagem é lista de usuários
+                    if (msg.Contains(";") && msg.Contains(".") && msg.Contains("\n"))
                     {
                         AtualizarListaUsuarios(msg);
                     }
@@ -210,18 +214,31 @@ namespace Chat_TCP
             }
         }
 
+
+
         void AtualizarListaUsuarios(string resposta)
         {
             lstUsuarios.Items.Clear();
+
+            // A resposta provavelmente vem com várias linhas nesse formato: apelido;ip;porta
             var linhas = resposta.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var linha in linhas)
             {
-                if (linha.StartsWith("- "))
+                // Ignora linhas que não tenham ';' (evita lixo)
+                if (!linha.Contains(";")) continue;
+
+                var partes = linha.Split(';');
+                if (partes.Length == 3)
                 {
-                    lstUsuarios.Items.Add(linha.Substring(2).Trim());
+                    string apelido = partes[0];
+                    string ip = partes[1];
+                    string porta = partes[2];
+                    lstUsuarios.Items.Add($"{apelido} ({ip}:{porta})");
                 }
             }
         }
+
+
 
         [STAThread]
         public static void Main(string[] args)
@@ -233,98 +250,6 @@ namespace Chat_TCP
             Application.EnableVisualStyles();
             Application.Run(new ClienteChat(apelido, ipServidor, porta));
         }
-
-    }
-
-    public class JanelaChatPrivado : Form
-    {
-        TextBox txtMensagens, txtEntrada;
-        Button btnEnviar;
-        TcpClient cliente;
-        NetworkStream stream;
-        Thread threadReceber;
-        string apelido;
-
-        public JanelaChatPrivado(string apelido, string ipDestino, int porta)
-        {
-            this.apelido = apelido;
-
-            Text = $"Chat Privado - {apelido} -> {ipDestino}:{porta}";
-            Width = 400;
-            Height = 300;
-
-            txtMensagens = new TextBox
-            {
-                Multiline = true,
-                Dock = DockStyle.Top,
-                Height = 200,
-                ReadOnly = true,
-                ScrollBars = ScrollBars.Vertical
-            };
-
-            txtEntrada = new TextBox { Dock = DockStyle.Fill };
-            btnEnviar = new Button { Text = "Enviar", Dock = DockStyle.Right, Width = 75 };
-
-            var painelInferior = new Panel { Dock = DockStyle.Bottom, Height = 30 };
-            painelInferior.Controls.Add(txtEntrada);
-            painelInferior.Controls.Add(btnEnviar);
-
-            Controls.Add(txtMensagens);
-            Controls.Add(painelInferior);
-
-            cliente = new TcpClient();
-            cliente.Connect(ipDestino, porta);
-            stream = cliente.GetStream();
-
-            threadReceber = new Thread(() => ReceberMensagens());
-            threadReceber.IsBackground = true;
-            threadReceber.Start();
-
-            btnEnviar.Click += (s, e) => EnviarMensagem();
-        }
-
-        public void AssociarCliente(TcpClient clienteExistente)
-        {
-            cliente = clienteExistente;
-            stream = cliente.GetStream();
-
-            threadReceber = new Thread(() => ReceberMensagens());
-            threadReceber.IsBackground = true;
-            threadReceber.Start();
-        }
-
-
-        void EnviarMensagem()
-        {
-            string msg = txtEntrada.Text.Trim();
-            if (msg == "") return;
-
-            string conteudo = $"{apelido}: {msg}";
-            byte[] dados = Encoding.UTF8.GetBytes(conteudo);
-            stream.Write(dados, 0, dados.Length);
-            txtMensagens.AppendText("Eu: " + msg + Environment.NewLine);
-            txtEntrada.Clear();
-        }
-
-        void ReceberMensagens()
-        {
-            try
-            {
-                byte[] buffer = new byte[1024];
-                while (true)
-                {
-                    int lidos = stream.Read(buffer, 0, buffer.Length);
-                    if (lidos == 0) break;
-                    string msg = Encoding.UTF8.GetString(buffer, 0, lidos);
-                    Invoke((MethodInvoker)(() => txtMensagens.AppendText($"[Privado] {msg}{Environment.NewLine}")));
-
-                }
-            }
-            catch { }
-            finally
-            {
-                cliente.Close();
-            }
-        }
     }
 }
+

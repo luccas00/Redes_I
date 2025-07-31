@@ -2,20 +2,4 @@
 # Este arquivo .gitignore foi criado automaticamente pelo Microsoft(R) Visual Studio.
 ################################################################################
 
-/Trabalho_Chat_TCP/.vs/Chat_TCP/CopilotIndices/17.12.31.40377/CodeChunks.db
-/Trabalho_Chat_TCP/.vs/Chat_TCP/CopilotIndices/17.12.31.40377/CodeChunks.db-shm
-/Trabalho_Chat_TCP/.vs/Chat_TCP/CopilotIndices/17.12.31.40377/CodeChunks.db-wal
-/Trabalho_Chat_TCP/.vs/Chat_TCP/CopilotIndices/17.12.31.40377/SemanticSymbols.db
-/Trabalho_Chat_TCP/.vs/Chat_TCP/CopilotIndices/17.12.31.40377/SemanticSymbols.db-shm
-/Trabalho_Chat_TCP/.vs/Chat_TCP/CopilotIndices/17.12.31.40377/SemanticSymbols.db-wal
-/Trabalho_Chat_TCP/.vs/Chat_TCP/FileContentIndex/45f5a39c-2565-4a2e-980e-68ba12e1c864.vsidx
-/Trabalho_Chat_TCP/.vs/Chat_TCP/FileContentIndex/55ffbda5-2a39-465b-819d-bfde044a0c11.vsidx
-/Trabalho_Chat_TCP/.vs/Chat_TCP/FileContentIndex/cc6c6297-55a7-4a4b-bcdd-cd22381f0932.vsidx
-/Trabalho_Chat_TCP/.vs/Chat_TCP/v17/.suo
-/Trabalho_Chat_TCP/.vs/Chat_TCP/v17/DocumentLayout.backup.json
-/Trabalho_Chat_TCP/.vs/Chat_TCP/v17/DocumentLayout.json
-/Trabalho_Chat_TCP/.vs/Chat_TCP/FileContentIndex/40898553-506f-4f89-89b7-70e57ab49e9c.vsidx
-/Trabalho_Chat_TCP/.vs/Chat_TCP/FileContentIndex/61147be6-89c1-4ece-a20e-fcabbbcf6801.vsidx
-/Trabalho_Chat_TCP/.vs/Chat_TCP/FileContentIndex/e3011e45-b2fb-4af8-acd3-aa26cb3aa329.vsidx
-/Trabalho_Chat_TCP/.vs/Chat_TCP/DesignTimeBuild/.dtbcache.v2
 /Trabalho_Chat_TCP/.vs

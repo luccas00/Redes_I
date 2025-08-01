@@ -116,8 +116,7 @@ namespace Chat_TCP
 
                         if (ipRemoto == "127.0.0.1" || ipRemoto == "::1")
                         {
-                            // Substitua pelo IP real da máquina local na rede
-                            ipRemoto = "192.168.1.21"; // Substitua com o IP correto
+                            ipRemoto = ObterIpLocal();
                         }
 
                         string chave = $"{ipRemoto}:{portaRemota}";
@@ -147,6 +146,22 @@ namespace Chat_TCP
             btnListar.Click += (s, e) => ListarUsuarios();
             btnConectar.Click += (s, e) => ConectarPrivado();
         }
+
+        private string ObterIpLocal()
+        {
+            string ipLocal = "127.0.0.1"; // fallback
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                {
+                    ipLocal = ip.ToString();
+                    break;
+                }
+            }
+            return ipLocal;
+        }
+
 
         void ConectarPrivado()
         {
@@ -180,6 +195,12 @@ namespace Chat_TCP
                 MessageBox.Show("Porta inválida.");
                 return;
             }
+
+            if (ipDestino == "127.0.0.1" || ipDestino == "::1")
+            {
+                ipDestino = ObterIpLocal();
+            }
+
 
             var chatPrivado = new JanelaChatPrivado(apelido, apelidoDestino, ipDestino, portaDestino);
             chatPrivado.Show();

@@ -116,9 +116,9 @@ namespace Chat_TCP
 
                         if (ipRemoto == "127.0.0.1" || ipRemoto == "::1")
                         {
-                            ipRemoto = ObterIpLocalDaRede(); // Função utilitária
+                            // Substitua pelo IP real da máquina local na rede
+                            ipRemoto = "192.168.1.21"; // Substitua com o IP correto
                         }
-
 
                         string chave = $"{ipRemoto}:{portaRemota}";
 
@@ -147,20 +147,6 @@ namespace Chat_TCP
             btnListar.Click += (s, e) => ListarUsuarios();
             btnConectar.Click += (s, e) => ConectarPrivado();
         }
-
-        public static string ObterIpLocalDaRede()
-        {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
-                {
-                    return ip.ToString();
-                }
-            }
-            return "127.0.0.1";
-        }
-
 
         void ConectarPrivado()
         {

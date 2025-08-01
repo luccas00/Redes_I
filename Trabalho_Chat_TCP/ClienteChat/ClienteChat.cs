@@ -102,8 +102,6 @@ namespace Chat_TCP
                     TcpClient clientePrivado = servidorPrivado.AcceptTcpClient();
                     Invoke((MethodInvoker)(() =>
                     {
-                        //var ipRemoto = ((IPEndPoint)clientePrivado.Client.RemoteEndPoint).Address.ToString();
-
                         // Lê o apelido enviado pelo cliente remoto
                         NetworkStream streamPrivado = clientePrivado.GetStream();
                         byte[] bufferApelido = new byte[1024];
@@ -112,8 +110,15 @@ namespace Chat_TCP
 
                         // Extrai IP e porta do cliente que iniciou a conexão
                         var remoteEndPoint = (IPEndPoint)clientePrivado.Client.RemoteEndPoint;
-                        string ipRemoto = remoteEndPoint.Address.ToString();
                         int portaRemota = remoteEndPoint.Port;
+
+                        var ipRemoto = ((IPEndPoint)clientePrivado.Client.RemoteEndPoint).Address.ToString();
+
+                        if (ipRemoto == "127.0.0.1" || ipRemoto == "::1")
+                        {
+                            ipRemoto = ObterIpLocalDaRede(); // Função utilitária
+                        }
+
 
                         string chave = $"{ipRemoto}:{portaRemota}";
 
@@ -142,6 +147,20 @@ namespace Chat_TCP
             btnListar.Click += (s, e) => ListarUsuarios();
             btnConectar.Click += (s, e) => ConectarPrivado();
         }
+
+        public static string ObterIpLocalDaRede()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                {
+                    return ip.ToString();
+                }
+            }
+            return "127.0.0.1";
+        }
+
 
         void ConectarPrivado()
         {

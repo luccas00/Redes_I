@@ -1,0 +1,101 @@
+1. RFC1700, IANA e Portas
+
+IANA (Internet Assigned Numbers Authority) é responsável pela alocação de números de protocolos, portas e outros identificadores na internet.
+
+Portas bem conhecidas: 0 a 1023. São reservadas para protocolos padrão como HTTP (porta 80 - TCP), HTTPS (443 - TCP), FTP (21 - TCP), SMTP (25 - TCP), DNS (53 - TCP/UDP).
+
+Portas altas: 49152 a 65535. Usadas para conexões temporárias e dinâmicas, atribuídas automaticamente.
+
+2. Atribuição de Portas Efêmeras
+
+O sistema operacional seleciona portas na faixa de 49152–65535 (portas privadas) para conexões temporárias TCP/UDP, conforme disponibilidade no momento da criação do socket.
+
+3. Aplicações que Preferem UDP
+
+Menor overhead (sem handshake).
+
+Transmissão contínua (ex: streaming).
+
+Tolerância a perda de pacotes.
+
+Menor latência (sem controle de congestionamento nem confirmação de recebimento).
+
+4. Sockets e Segmentos
+
+Cada conexão TCP é identificada pela tupla (IP origem, porta origem, IP destino, porta destino).
+
+Mesmo que Host A e B enviem para a porta 6000, os sockets criados serão distintos porque as portas de origem e os IPs são diferentes. Logo, não vão para o mesmo socket.
+
+5. SSL e Camada
+
+SSL (ou TLS) opera entre as camadas de transporte e aplicação, sendo considerado um protocolo da camada de aplicação.
+
+Fornece criptografia, autenticação e integridade fim a fim no TCP.
+
+6. Detecção de Perda no TCP
+
+Mecanismos:
+
+Timeout: retransmissão ocorre após tempo limite.
+
+ACK duplicado: 3 ACKs idênticos disparam retransmissão rápida.
+
+Diferença: Timeout é mais lento; ACK duplicado permite reação imediata.
+
+7. Controle de Congestionamento TCP
+
+TCP usa AIMD (Aumento Aditivo, Diminuição Multiplicativa).
+
+Aumenta janela gradualmente (slow start).
+
+Reduz pela metade ao detectar perda.
+
+TCP também utiliza: retransmissão rápida, recuperação rápida, e monitora RTT para ajustar o envio.
+
+8. UDP e Sobrecarga
+
+Aplicações implementam seus próprios mecanismos de controle de fluxo.
+
+Ex: buffers, limitação de taxa de envio, controle baseado em feedback da aplicação receptora.
+
+9. Tamanho Máximo de Segmento TCP
+
+Valor máximo = 65.535 bytes, pois:
+
+Cabeçalho TCP + IP = 40 bytes.
+
+65.535 - 40 = 65.495 bytes de dados.
+
+Justifica-se pelo tamanho do campo “Tamanho Total” no cabeçalho IP (16 bits).
+
+10. Razão TPROP / TTR
+
+TPROP = tempo de propagação, TTR = tempo total de resposta.
+
+Quanto menor essa razão, melhor o desempenho.
+
+Selective Repeat é superior pois retransmite apenas os pacotes perdidos, não toda a janela.
+
+11. Estabelecimento TCP e ACK com Dados
+
+TCP define número de sequência (SEQ) e de reconhecimento (ACK) para garantir entrega ordenada.
+
+Um pacote ACK pode sim conter dados – técnica chamada de piggybacking.
+
+12. Protocolo QUIC
+
+Desenvolvido pela Google.
+
+Opera sobre UDP, mas com confiabilidade, criptografia embutida e menor latência que TCP + TLS.
+
+Evita múltiplos RTTs e perdas de performance típicas do TCP.
+
+13. Versões do TCP
+
+Vegas: Prevenção de congestionamento, detecta aumento de RTT.
+
+Reno: Introduz recuperação rápida e retransmissão rápida.
+
+Tahoe: Timeout e slow start, sem recuperação rápida.
+
+Cubic: Utilizado em redes modernas (Linux), melhora desempenho em redes de alta velocidade e latência.

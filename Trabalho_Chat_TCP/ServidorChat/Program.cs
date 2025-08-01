@@ -84,6 +84,48 @@ namespace Chat_TCP
                         byte[] resposta = Encoding.UTF8.GetBytes(sb.ToString());
                         stream.Write(resposta, 0, resposta.Length);
                     }
+                    else if (mensagem.StartsWith("/desconectar "))
+                    {
+                        string apelidoParaDesconectar = mensagem.Substring(13).Trim();
+
+                        TcpClient clienteParaRemover = null;
+                        lock (locker)
+                        {
+                            foreach (var c in clientes)
+                            {
+                                if (c.apelido.Equals(apelidoParaDesconectar, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    clienteParaRemover = c.cliente;
+                                    break;
+                                }
+                            }
+                            if (clienteParaRemover != null)
+                                clientes.RemoveAll(c => c.cliente == clienteParaRemover);
+                        }
+
+                        if (clienteParaRemover != null)
+                        {
+                            clienteParaRemover.Close();
+                            byte[] resposta = Encoding.UTF8.GetBytes($"Usuário {apelidoParaDesconectar} desconectado com sucesso.");
+                            stream.Write(resposta, 0, resposta.Length);
+                            Console.WriteLine($"Usuário {apelidoParaDesconectar} desconectado via comando.");
+                        }
+                        else
+                        {
+                            byte[] resposta = Encoding.UTF8.GetBytes($"Usuário {apelidoParaDesconectar} não encontrado.");
+                            stream.Write(resposta, 0, resposta.Length);
+                        }
+                    }
+                    else if (mensagem == "/status")
+                    {
+                        int total;
+                        lock (locker)
+                            total = clientes.Count;
+
+                        string status = $"Servidor online\nUsuários conectados: {total}\nTempo uptime: {DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime}";
+                        byte[] resposta = Encoding.UTF8.GetBytes(status);
+                        stream.Write(resposta, 0, resposta.Length);
+                    }
                     else
                     {
                         Console.WriteLine($"Mensagem recebida: {mensagem}");
@@ -107,6 +149,7 @@ namespace Chat_TCP
                 Console.WriteLine($"Cliente desconectado. Total atual: {clientes.Count}");
             }
         }
+
 
         static void Broadcast(string mensagem, TcpClient remetente)
         {

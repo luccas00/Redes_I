@@ -15,3 +15,4 @@ F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ClienteChat
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ClienteChat.genruntimeconfig.cache
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\ref\ClienteChat.dll
 F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\Chat_TCP.ClienteChat.resources
+F:\UFOP\Redes\Trabalho_Chat_TCP\ClienteChat\obj\Debug\net9.0-windows\Chat_TCP.JanelaChatPrivado.resources

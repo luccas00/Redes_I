@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
-using System.Net;
 using System.Threading;
 using System.Windows.Forms;
+using System.Net;
 
 namespace Chat_TCP
 {
@@ -20,77 +17,72 @@ namespace Chat_TCP
 
         string apelidoLocal;
         string apelidoDestino;
-        string ipDestino;
-        int portaDestino;
 
-        public string ApelidoRemoto;
-
+        // Construtor usado para iniciar chat privado (envia conexão)
         public JanelaChatPrivado(string apelidoLocal, string apelidoDestino, string ipDestino, int portaDestino)
         {
             this.apelidoLocal = apelidoLocal;
             this.apelidoDestino = apelidoDestino;
-            this.ipDestino = ipDestino;
-            this.portaDestino = portaDestino;
 
+            // Configura UI comum
+            InitializeUI();
             Text = $"Chat Privado - {apelidoLocal} -> {apelidoDestino} ({ipDestino}:{portaDestino})";
 
-            Width = 400;
-            Height = 300;
-
-            txtMensagens = new TextBox
-            {
-                Multiline = true,
-                Dock = DockStyle.Top,
-                Height = 200,
-                ReadOnly = true,
-                ScrollBars = ScrollBars.Vertical
-            };
-
-            txtEntrada = new TextBox { Dock = DockStyle.Fill };
-            btnEnviar = new Button { Text = "Enviar", Dock = DockStyle.Right, Width = 75 };
-
-            var painelInferior = new Panel { Dock = DockStyle.Bottom, Height = 30 };
-            painelInferior.Controls.Add(txtEntrada);
-            painelInferior.Controls.Add(btnEnviar);
-
-            Controls.Add(txtMensagens);
-            Controls.Add(painelInferior);
-
+            // Estabelece conexão de saída
             cliente = new TcpClient();
             cliente.Connect(ipDestino, portaDestino);
             stream = cliente.GetStream();
 
-            // Envia apelido local ao se conectar
-            byte[] apelidoBytes = Encoding.UTF8.GetBytes(apelidoLocal);
+            // Envia apelido local no handshake
+            var apelidoBytes = Encoding.UTF8.GetBytes(apelidoLocal);
             stream.Write(apelidoBytes, 0, apelidoBytes.Length);
 
-            threadReceber = new Thread(() => ReceberMensagens());
-            threadReceber.IsBackground = true;
+            // Inicia thread de recebimento
+            threadReceber = new Thread(ReceberMensagens) { IsBackground = true };
             threadReceber.Start();
 
             btnEnviar.Click += (s, e) => EnviarMensagem();
         }
 
-        public void AssociarCliente(TcpClient clienteExistente)
+        // Construtor usado para conexões recebidas (aceitas)
+        public JanelaChatPrivado(string apelidoLocal, TcpClient clienteExistente)
         {
-            cliente = clienteExistente;
-            stream = cliente.GetStream();
+            this.apelidoLocal = apelidoLocal;
+            this.cliente = clienteExistente;
+            this.stream = cliente.GetStream();
 
-            // Lê o apelido de quem se conectou (1a mensagem)
+            // Lê apelido de quem se conectou
             byte[] buffer = new byte[1024];
             int lidos = stream.Read(buffer, 0, buffer.Length);
-            ApelidoRemoto = Encoding.UTF8.GetString(buffer, 0, lidos);
+            this.apelidoDestino = Encoding.UTF8.GetString(buffer, 0, lidos);
 
-            threadReceber = new Thread(() => ReceberMensagens());
-            threadReceber.IsBackground = true;
+            // Configura UI comum
+            InitializeUI();
+            var ep = (IPEndPoint)cliente.Client.RemoteEndPoint;
+            Text = $"Chat Privado - {apelidoLocal} -> {apelidoDestino} ({ep.Address}:{ep.Port})";
+
+            // Inicia thread de recebimento
+            threadReceber = new Thread(ReceberMensagens) { IsBackground = true };
             threadReceber.Start();
+
+            btnEnviar.Click += (s, e) => EnviarMensagem();
+        }
+
+        private void InitializeUI()
+        {
+            Width = 400; Height = 300;
+            txtMensagens = new TextBox { Multiline = true, Dock = DockStyle.Top, Height = 200, ReadOnly = true, ScrollBars = ScrollBars.Vertical };
+            txtEntrada = new TextBox { Dock = DockStyle.Fill };
+            btnEnviar = new Button { Text = "Enviar", Dock = DockStyle.Right, Width = 75 };
+            var painelInferior = new Panel { Dock = DockStyle.Bottom, Height = 30 };
+            painelInferior.Controls.Add(txtEntrada); painelInferior.Controls.Add(btnEnviar);
+            Controls.Add(txtMensagens); Controls.Add(painelInferior);
         }
 
         void EnviarMensagem()
         {
             string msg = txtEntrada.Text.Trim();
             if (msg == "") return;
-
             string conteudo = $"{apelidoLocal}: {msg}";
             byte[] dados = Encoding.UTF8.GetBytes(conteudo);
             stream.Write(dados, 0, dados.Length);
@@ -112,10 +104,7 @@ namespace Chat_TCP
                 }
             }
             catch { }
-            finally
-            {
-                cliente?.Close();
-            }
+            finally { cliente?.Close(); }
         }
     }
 }

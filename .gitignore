@@ -3,3 +3,5 @@
 ################################################################################
 
 /Trabalho_Chat_TCP/.vs
+/Trabalho_Chat_TCP/ServidorChat/bin/Debug
+/Trabalho_Chat_TCP/ClienteChat/bin/Debug

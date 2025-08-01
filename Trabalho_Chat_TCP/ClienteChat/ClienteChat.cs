@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.IO;
 
 namespace Chat_TCP
 {
@@ -26,6 +27,16 @@ namespace Chat_TCP
         TcpListener servidorPrivado;
         string apelido;
         int portaPrivada;
+
+        static readonly string logPath = "client_log.txt";
+        static readonly string errorLogPath = "client_errors.csv";
+
+        static void Log(string msg) => File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {msg}{Environment.NewLine}");
+        static void LogError(Exception ex)
+        {
+            string msg = ex.Message.Replace("\"", "\"\"");
+            File.AppendAllText(errorLogPath, $"\"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\",\"{msg}\"{Environment.NewLine}");
+        }
 
         bool recebendoListaUsuarios = false;
 
@@ -76,14 +87,25 @@ namespace Chat_TCP
             Controls.Add(painelConectar);
             Controls.Add(painelBroadcast);
 
-            // Porta privada din‚mica
+            // Porta privada din√¢mica
             servidorPrivado = new TcpListener(IPAddress.Any, 0);
             servidorPrivado.Start();
             portaPrivada = ((IPEndPoint)servidorPrivado.LocalEndpoint).Port;
+            Log($"Servidor privado iniciado na porta {portaPrivada}");
 
             // Conectar servidor principal
             cliente = new TcpClient();
-            cliente.Connect(ipServidor, porta);
+            try
+            {
+                cliente.Connect(ipServidor, porta);
+                Log($"Conectado ao servidor {ipServidor}:{porta}");
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                MessageBox.Show($"Erro ao conectar ao servidor: {ex.Message}");
+                return;
+            }
             stream = cliente.GetStream();
 
             // Enviar apelido e porta privada
@@ -102,13 +124,13 @@ namespace Chat_TCP
                     TcpClient clientePrivado = servidorPrivado.AcceptTcpClient();
                     Invoke((MethodInvoker)(() =>
                     {
-                        // LÍ o apelido enviado pelo cliente remoto
+                        // L√™ o apelido enviado pelo cliente remoto
                         NetworkStream streamPrivado = clientePrivado.GetStream();
                         byte[] bufferApelido = new byte[1024];
                         int lidos = streamPrivado.Read(bufferApelido, 0, bufferApelido.Length);
                         string apelidoRemoto = Encoding.UTF8.GetString(bufferApelido, 0, lidos);
 
-                        // Extrai IP e porta do cliente que iniciou a conex„o
+                        // Extrai IP e porta do cliente que iniciou a conex√£o
                         var remoteEndPoint = (IPEndPoint)clientePrivado.Client.RemoteEndPoint;
                         int portaRemota = remoteEndPoint.Port;
 
@@ -151,16 +173,16 @@ namespace Chat_TCP
         {
             if (lstUsuarios.SelectedItem == null)
             {
-                MessageBox.Show("Selecione um usu·rio para conectar.");
+                MessageBox.Show("Selecione um usu√°rio para conectar.");
                 return;
             }
 
-            string item = lstUsuarios.SelectedItem.ToString(); // Exemplo: "Jo„o (192.168.0.10:3005)"
+            string item = lstUsuarios.SelectedItem.ToString(); // Exemplo: "Jo√£o (192.168.0.10:3005)"
             int idxIni = item.LastIndexOf('(');
             int idxFim = item.LastIndexOf(')');
             if (idxIni < 0 || idxFim < 0 || idxFim <= idxIni)
             {
-                MessageBox.Show("Formato inv·lido do usu·rio selecionado.");
+                MessageBox.Show("Formato inv√°lido do usu√°rio selecionado.");
                 return;
             }
 
@@ -169,14 +191,14 @@ namespace Chat_TCP
             var partes = endereco.Split(':');
             if (partes.Length != 2)
             {
-                MessageBox.Show("EndereÁo inv·lido.");
+                MessageBox.Show("Endere√ßo inv√°lido.");
                 return;
             }
 
             string ipDestino = partes[0];
             if (!int.TryParse(partes[1], out int portaDestino))
             {
-                MessageBox.Show("Porta inv·lida.");
+                MessageBox.Show("Porta inv√°lida.");
                 return;
             }
 
@@ -185,14 +207,24 @@ namespace Chat_TCP
                 ipDestino = "192.168.1.21";
             }
 
-            var chatPrivado = new JanelaChatPrivado(apelido, apelidoDestino, ipDestino, portaDestino);
-            chatPrivado.Show();
+            try
+            {
+                var chatPrivado = new JanelaChatPrivado(apelido, apelidoDestino, ipDestino, portaDestino);
+                chatPrivado.Show();
+                Log($"Chat privado iniciado com {apelidoDestino} em {ipDestino}:{portaDestino}");
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                MessageBox.Show($"Falha ao conectar chat privado: {ex.Message}");
+            }
         }
 
         void ListarUsuarios()
         {
             byte[] buffer = Encoding.UTF8.GetBytes("/lista");
             stream.Write(buffer, 0, buffer.Length);
+            Log("Solicitada lista de usu√°rios");
         }
 
         void EnviarBroadcast(string apelido, TextBox txt)
@@ -203,6 +235,7 @@ namespace Chat_TCP
             string conteudo = $"[Broadcast] {apelido}: {mensagem}";
             byte[] buffer = Encoding.UTF8.GetBytes(conteudo);
             stream.Write(buffer, 0, buffer.Length);
+            Log($"Broadcast enviado: {mensagem}");
             txt.Clear();
         }
 
@@ -218,7 +251,7 @@ namespace Chat_TCP
 
                     string msg = Encoding.UTF8.GetString(buffer, 0, bytesLidos);
 
-                    // Verifica se mensagem È lista de usu·rios
+                    // Verifica se mensagem √© lista de usu√°rios
                     if (msg.Contains(";") && msg.Contains(".") && msg.Contains("\n"))
                     {
                         AtualizarListaUsuarios(msg);
@@ -226,10 +259,14 @@ namespace Chat_TCP
                     else
                     {
                         Invoke((MethodInvoker)(() => txtMensagens.AppendText(msg + Environment.NewLine)));
+                        Log($"Mensagem recebida: {msg}");
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError(ex);
+            }
             finally
             {
                 cliente.Close();
@@ -242,11 +279,11 @@ namespace Chat_TCP
         {
             lstUsuarios.Items.Clear();
 
-            // A resposta provavelmente vem com v·rias linhas nesse formato: apelido;ip;porta
+            // A resposta provavelmente vem com v√°rias linhas nesse formato: apelido;ip;porta
             var linhas = resposta.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var linha in linhas)
             {
-                // Ignora linhas que n„o tenham ';' (evita lixo)
+                // Ignora linhas que n√£o tenham ';' (evita lixo)
                 if (!linha.Contains(";")) continue;
 
                 var partes = linha.Split(';');

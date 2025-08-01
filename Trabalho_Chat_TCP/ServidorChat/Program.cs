@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.IO;
 
 namespace Chat_TCP
 {
@@ -12,6 +13,19 @@ namespace Chat_TCP
         static TcpListener listener;
         static List<(TcpClient cliente, string apelido, string ip, int portaPrivada)> clientes = new();
         static object locker = new();
+        static readonly string logPath = "server_log.txt";
+        static readonly string errorLogPath = "server_errors.csv";
+
+        static void Log(string mensagem)
+        {
+            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {mensagem}{Environment.NewLine}");
+        }
+
+        static void LogError(Exception ex)
+        {
+            string msg = ex.Message.Replace("\"", "\"\"");
+            File.AppendAllText(errorLogPath, $"\"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\",\"{msg}\"{Environment.NewLine}");
+        }
 
         static void Main()
         {
@@ -19,6 +33,7 @@ namespace Chat_TCP
             listener = new TcpListener(IPAddress.Any, porta);
             listener.Start();
             Console.WriteLine($"Servidor ouvindo em todas as interfaces na porta {porta}");
+            Log($"Servidor iniciado na porta {porta}");
 
             while (true)
             {
@@ -44,6 +59,7 @@ namespace Chat_TCP
                 {
                     clientes.Add((cliente, apelido, ipCliente, portaPrivada));
                     Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Novo usuário: {apelido} ({ipCliente}:{portaPrivada})");
+                    Log($"Novo usuário: {apelido} ({ipCliente}:{portaPrivada})");
                 }
 
                 Thread thread = new(() => AtenderCliente(cliente));
@@ -129,6 +145,7 @@ namespace Chat_TCP
                     else
                     {
                         Console.WriteLine($"Mensagem recebida: {mensagem}");
+                        Log($"Mensagem recebida: {mensagem}");
                         Broadcast(mensagem, cliente);
                     }
                 }
@@ -136,6 +153,7 @@ namespace Chat_TCP
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro: {ex.Message}");
+                LogError(ex);
             }
             finally
             {
@@ -147,6 +165,7 @@ namespace Chat_TCP
                 }
                 cliente.Close();
                 Console.WriteLine($"Cliente desconectado. Total atual: {clientes.Count}");
+                Log($"Cliente desconectado. Total atual: {clientes.Count}");
             }
         }
 
@@ -154,6 +173,7 @@ namespace Chat_TCP
         static void Broadcast(string mensagem, TcpClient remetente)
         {
             byte[] dados = Encoding.UTF8.GetBytes(mensagem);
+            Log($"Broadcast: {mensagem}");
 
             lock (locker)
             {

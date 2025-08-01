@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
+using System.IO;
 
 namespace Chat_TCP
 {
@@ -24,6 +25,16 @@ namespace Chat_TCP
         int portaDestino;
 
         public string ApelidoRemoto;
+
+        static readonly string logPath = "client_log.txt";
+        static readonly string errorLogPath = "client_errors.csv";
+
+        static void Log(string msg) => File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {msg}{Environment.NewLine}");
+        static void LogError(Exception ex)
+        {
+            string msg = ex.Message.Replace("\"", "\"\"");
+            File.AppendAllText(errorLogPath, $"\"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\",\"{msg}\"{Environment.NewLine}");
+        }
 
         public JanelaChatPrivado(string apelidoLocal, string apelidoDestino, string ipDestino, int portaDestino)
         {
@@ -57,7 +68,18 @@ namespace Chat_TCP
             Controls.Add(painelInferior);
 
             cliente = new TcpClient();
-            cliente.Connect(ipDestino, portaDestino);
+            try
+            {
+                cliente.Connect(ipDestino, portaDestino);
+                Log($"Conectado ao chat privado {ipDestino}:{portaDestino}");
+            }
+            catch (Exception ex)
+            {
+                LogError(ex);
+                MessageBox.Show($"Erro ao conectar chat privado: {ex.Message}");
+                Close();
+                return;
+            }
             stream = cliente.GetStream();
 
             // Envia apelido local ao se conectar
@@ -95,6 +117,7 @@ namespace Chat_TCP
             byte[] dados = Encoding.UTF8.GetBytes(conteudo);
             stream.Write(dados, 0, dados.Length);
             txtMensagens.AppendText("Eu: " + msg + Environment.NewLine);
+            Log($"Mensagem privada enviada para {apelidoDestino}: {msg}");
             txtEntrada.Clear();
         }
 
@@ -111,7 +134,10 @@ namespace Chat_TCP
                     Invoke((MethodInvoker)(() => txtMensagens.AppendText($"[Privado] {msg}{Environment.NewLine}")));
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError(ex);
+            }
             finally
             {
                 cliente?.Close();

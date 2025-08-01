@@ -102,12 +102,24 @@ namespace Chat_TCP
                     TcpClient clientePrivado = servidorPrivado.AcceptTcpClient();
                     Invoke((MethodInvoker)(() =>
                     {
-                        var ipRemoto = ((IPEndPoint)clientePrivado.Client.RemoteEndPoint).Address.ToString();
-                        string chave = $"{ipRemoto}:{portaPrivada}";
+                        //var ipRemoto = ((IPEndPoint)clientePrivado.Client.RemoteEndPoint).Address.ToString();
+
+                        // Lê o apelido enviado pelo cliente remoto
+                        NetworkStream streamPrivado = clientePrivado.GetStream();
+                        byte[] bufferApelido = new byte[1024];
+                        int lidos = streamPrivado.Read(bufferApelido, 0, bufferApelido.Length);
+                        string apelidoRemoto = Encoding.UTF8.GetString(bufferApelido, 0, lidos);
+
+                        // Extrai IP e porta do cliente que iniciou a conexão
+                        var remoteEndPoint = (IPEndPoint)clientePrivado.Client.RemoteEndPoint;
+                        string ipRemoto = remoteEndPoint.Address.ToString();
+                        int portaRemota = remoteEndPoint.Port;
+
+                        string chave = $"{ipRemoto}:{portaRemota}";
 
                         if (!janelasPrivadas.ContainsKey(chave))
                         {
-                            var chatPrivado = new JanelaChatPrivado(apelido, ipRemoto, ipRemoto, portaPrivada);
+                            var chatPrivado = new JanelaChatPrivado(apelido, apelidoRemoto, ipRemoto, portaRemota);
                             chatPrivado.AssociarCliente(clientePrivado);
 
                             chatPrivado.FormClosed += (a, b) => janelasPrivadas.Remove(chave);
@@ -119,6 +131,7 @@ namespace Chat_TCP
                         {
                             clientePrivado.Close();
                         }
+
                     }));
                 }
             });

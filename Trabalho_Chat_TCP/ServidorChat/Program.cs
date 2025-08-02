@@ -122,7 +122,7 @@ namespace Chat_TCP
                         lock (locker)
                             total = clientes.Count;
 
-                        string status = $"Servidor online\nUsuários conectados: {total}\nTempo uptime: {DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime}";
+                        string status = $"Servidor online - Usuários conectados: {total} - Tempo uptime: {DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime}";
                         byte[] resposta = Encoding.UTF8.GetBytes(status);
                         stream.Write(resposta, 0, resposta.Length);
                     }
@@ -176,3 +176,5 @@ namespace Chat_TCP
         }
     }
 }
+
+

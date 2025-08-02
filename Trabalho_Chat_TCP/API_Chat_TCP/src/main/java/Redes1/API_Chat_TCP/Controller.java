@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Controller {
 
     private static final String HOST = "127.0.0.1";
-    private static final int PORTA_SERVIDOR = 1998;
+    private static final int PORTA_SERVIDOR = 2998;
     private static final String APELIDO_API = "API_Chat_TCP";
 
     @GetMapping("/usuarios/listar")
@@ -70,10 +70,10 @@ public class Controller {
     @PostMapping("/enviar")
     public ResponseEntity<String> enviarMensagemBroadcast(@RequestBody ChatDTO dto) {
         String apelido = "API_Chat_TCP";
-        int portaPrivada = 1998; // Valor arbitrário fixo
+        int portaPrivada = PORTA_SERVIDOR; // Valor arbitrário fixo
         String dadosConexao = apelido + ";" + portaPrivada;
 
-        try (Socket socket = new Socket("127.0.0.1", 1998)) {
+        try (Socket socket = new Socket(HOST, PORTA_SERVIDOR)) {
             OutputStream out = socket.getOutputStream();
 
             // 1. Enviar conexão inicial
@@ -96,10 +96,10 @@ public class Controller {
     @GetMapping("/enviar")
     public ResponseEntity<String> enviarMensagemBroadcastViaUrl(@RequestParam String mensagem) {
         String apelido = "API_Chat_TCP";
-        int portaPrivada = 1998; // Valor arbitrário fixo
+        int portaPrivada = PORTA_SERVIDOR; // Valor arbitrário fixo
         String dadosConexao = apelido + ";" + portaPrivada;
 
-        try (Socket socket = new Socket("127.0.0.1", 1998)) {
+        try (Socket socket = new Socket(HOST, PORTA_SERVIDOR)) {
             OutputStream out = socket.getOutputStream();
 
             // 1. Enviar conexão inicial
@@ -123,10 +123,10 @@ public class Controller {
     @GetMapping("/status")
     public ResponseEntity<String> pingServidor() {
         String apelido       = "API_Chat_TCP";
-        int portaPrivada     = 1998;
+        int portaPrivada     = PORTA_SERVIDOR;
         String handshake     = apelido + ";" + portaPrivada;
 
-        try (Socket socket = new Socket("127.0.0.1", 1998);
+        try (Socket socket = new Socket(HOST, PORTA_SERVIDOR);
              OutputStream out = socket.getOutputStream();
              InputStream in  = socket.getInputStream()) {
 
@@ -155,10 +155,10 @@ public class Controller {
     @GetMapping("/desconectar")
     public ResponseEntity<String> desconectarUsuario(@RequestParam String apelido) {
         String apelidoApi   = "API_Chat_TCP";
-        int portaPrivada    = 1998;
+        int portaPrivada    = PORTA_SERVIDOR;
         String handshake    = apelidoApi + ";" + portaPrivada;
 
-        try (Socket socket = new Socket("127.0.0.1", 1998);
+        try (Socket socket = new Socket(HOST, PORTA_SERVIDOR);
              OutputStream out = socket.getOutputStream();
              InputStream in  = socket.getInputStream()) {
 

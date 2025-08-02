@@ -9,17 +9,36 @@ namespace Chat_TCP
 {
     class Program
     {
-        static TcpListener listener;
+        static TcpListener listenerChat;
+        static TcpListener listenerApi;
         static List<(TcpClient cliente, string apelido, string ip, int portaPrivada)> clientes = new();
         static object locker = new();
 
         static void Main()
         {
-            int porta = 1998;
-            listener = new TcpListener(IPAddress.Any, porta);
-            listener.Start();
-            Console.WriteLine($"Servidor ouvindo em todas as interfaces na porta {porta}");
+            const int portaChat = 1998;
+            const int portaApi  = 2998;
 
+            listenerChat = new TcpListener(IPAddress.Any, portaChat);
+            listenerApi  = new TcpListener(IPAddress.Any, portaApi);
+
+            listenerChat.Start();
+            listenerApi.Start();
+
+            Console.WriteLine($"Servidor ouvindo na porta {portaChat} (chat) e {portaApi} (api)");
+
+            Thread tChat = new(() => AceitarConexoes(listenerChat));
+            Thread tApi  = new(() => AceitarConexoes(listenerApi));
+
+            tChat.Start();
+            tApi.Start();
+
+            tChat.Join();
+            tApi.Join();
+        }
+
+        static void AceitarConexoes(TcpListener listener)
+        {
             while (true)
             {
                 TcpClient cliente = listener.AcceptTcpClient();
